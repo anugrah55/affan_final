@@ -1,41 +1,51 @@
 import React from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
-import { AuthProvider, useAuth } from './context/AuthContext';
-import { Login } from './pages/Login';
-import { Signup } from './pages/Signup';
-import { Dashboard } from './pages/Dashboard';
-import { Missions } from './pages/Missions';
-import { Sessions } from './pages/Sessions';
+import { AuthProvider } from './context/AuthContext';
+import { ProtectedRoute } from './components/layout/ProtectedRoute';
+import { AppLayout } from './components/layout/AppLayout';
 
-// Protected Route Wrapper
-function RequireAuth({ children }) {
-  const { currentUser } = useAuth();
-  if (!currentUser) return <Navigate to="/login" replace />;
-  return children;
-}
+// Lazy loading pages for performance optimization
+const Login = React.lazy(() => import('./pages/Auth/Login'));
+const Signup = React.lazy(() => import('./pages/Auth/Signup'));
+const Dashboard = React.lazy(() => import('./pages/Dashboard/Dashboard'));
+const TripDetails = React.lazy(() => import('./pages/TripDetails/TripDetails'));
 
-// Public Route Wrapper (redirects if already logged in)
-function PublicOnly({ children }) {
-  const { currentUser } = useAuth();
-  if (currentUser) return <Navigate to="/" replace />;
-  return children;
-}
+const FallbackLoader = () => (
+  <div className="flex h-screen w-full items-center justify-center bg-gray-50">
+    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-500"></div>
+  </div>
+);
 
-export default function App() {
+function App() {
   return (
-    <AuthProvider>
-      <BrowserRouter basename="/focus_architect/">
-        <Routes>
-          <Route path="/login" element={<PublicOnly><Login /></PublicOnly>} />
-          <Route path="/signup" element={<PublicOnly><Signup /></PublicOnly>} />
-          
-          <Route path="/" element={<RequireAuth><Dashboard /></RequireAuth>} />
-          <Route path="/missions" element={<RequireAuth><Missions /></RequireAuth>} />
-          <Route path="/sessions" element={<RequireAuth><Sessions /></RequireAuth>} />
-          
-          <Route path="*" element={<Navigate to="/" replace />} />
-        </Routes>
-      </BrowserRouter>
-    </AuthProvider>
+    <BrowserRouter>
+      <AuthProvider>
+        <React.Suspense fallback={<FallbackLoader />}>
+          <Routes>
+            {/* Public Routes */}
+            <Route path="/login" element={<Login />} />
+            <Route path="/signup" element={<Signup />} />
+
+            {/* Protected Routes inside App Layout */}
+            <Route 
+              path="/" 
+              element={
+                <ProtectedRoute>
+                  <AppLayout />
+                </ProtectedRoute>
+              }
+            >
+              <Route index element={<Dashboard />} />
+              <Route path="trip/:tripId" element={<TripDetails />} />
+            </Route>
+
+            {/* Catch all */}
+            <Route path="*" element={<Navigate to="/" replace />} />
+          </Routes>
+        </React.Suspense>
+      </AuthProvider>
+    </BrowserRouter>
   );
 }
+
+export default App;

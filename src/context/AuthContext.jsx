@@ -1,62 +1,51 @@
-import React, { createContext, useContext, useEffect, useState } from 'react';
-import { 
-  onAuthStateChanged, 
-  signInWithEmailAndPassword, 
-  createUserWithEmailAndPassword,
-  signOut,
-  updateProfile
-} from 'firebase/auth';
-import { auth } from '../services/firebase';
+import React, { createContext, useContext, useState, useEffect } from 'react';
+import { authService } from '../services/authService';
 
-const AuthContext = createContext();
+const AuthContext = createContext(null);
 
-export function useAuth() {
-  return useContext(AuthContext);
-}
-
-export function AuthProvider({ children }) {
-  const [currentUser, setCurrentUser] = useState(null);
+export const AuthProvider = ({ children }) => {
+  const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (!auth) {
-      setLoading(false);
-      return;
+    // Check if user is logged in
+    const currentUser = authService.getCurrentUser();
+    if (currentUser) {
+      setUser(currentUser);
     }
-    
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
-      setCurrentUser(user);
-      setLoading(false);
-    });
-
-    return unsubscribe;
+    setLoading(false);
   }, []);
 
-  async function signup(email, password, name) {
-    const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-    await updateProfile(userCredential.user, { displayName: name });
-    setCurrentUser({ ...userCredential.user, displayName: name });
-    return userCredential;
-  }
+  const login = async (email, password) => {
+    const userData = await authService.login(email, password);
+    setUser(userData);
+  };
 
-  function login(email, password) {
-    return signInWithEmailAndPassword(auth, email, password);
-  }
+  const register = async (name, email, password) => {
+    const userData = await authService.register(name, email, password);
+    setUser(userData);
+  };
 
-  function logout() {
-    return signOut(auth);
-  }
+  const logout = async () => {
+    await authService.logout();
+    setUser(null);
+  };
 
   const value = {
-    currentUser,
+    user,
+    loading,
     login,
-    signup,
+    register,
     logout
   };
 
-  return (
-    <AuthContext.Provider value={value}>
-      {!loading && children}
-    </AuthContext.Provider>
-  );
-}
+  return <AuthContext.Provider value={value}>{!loading && children}</AuthContext.Provider>;
+};
+
+export const useAuth = () => {
+  const context = useContext(AuthContext);
+  if (!context) {
+    throw new Error('useAuth must be used within an AuthProvider');
+  }
+  return context;
+};

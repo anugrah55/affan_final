@@ -1,54 +1,15 @@
 import React from 'react';
-import { cn } from './Button';
+import { motion } from 'framer-motion';
 
-export function Card({ className, ...props }) {
+export const Card = ({ children, className = '', onClick, hover = false }) => {
+  const isClickable = !!onClick;
   return (
-    <div
-      className={cn(
-        "rounded-xl border border-gray-200 bg-white text-gray-950 shadow-sm",
-        className
-      )}
-      {...props}
-    />
+    <motion.div
+      onClick={onClick}
+      whileHover={hover && isClickable ? { y: -4 } : {}}
+      className={`bg-white rounded-3xl border border-gray-100/80 shadow-sm ${isClickable ? 'cursor-pointer hover:shadow-md transition-shadow' : ''} ${className}`}
+    >
+      {children}
+    </motion.div>
   );
-}
-
-export function CardHeader({ className, ...props }) {
-  return (
-    <div
-      className={cn("flex flex-col space-y-1.5 p-6", className)}
-      {...props}
-    />
-  );
-}
-
-export function CardTitle({ className, ...props }) {
-  return (
-    <h3
-      className={cn("text-2xl font-semibold leading-none tracking-tight", className)}
-      {...props}
-    />
-  );
-}
-
-export function CardDescription({ className, ...props }) {
-  return (
-    <p
-      className={cn("text-sm text-gray-500", className)}
-      {...props}
-    />
-  );
-}
-
-export function CardContent({ className, ...props }) {
-  return <div className={cn("p-6 pt-0", className)} {...props} />;
-}
-
-export function CardFooter({ className, ...props }) {
-  return (
-    <div
-      className={cn("flex items-center p-6 pt-0", className)}
-      {...props}
-    />
-  );
-}
+};
