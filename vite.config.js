@@ -4,6 +4,6 @@ import tailwindcss from '@tailwindcss/vite'
 
 // https://vite.dev/config/
 export default defineConfig({
-  base: "/focus_architect/",
+  base: "/affan_final/",
   plugins: [react(), tailwindcss()],
 })
